@@ -21,6 +21,9 @@
 #define I2C_SDA 32
 #define I2C_SCL 33
 
+int leftEyeSensorValue = 0;
+int rightEyeSensorValue = 0;
+
 BluetoothSerial SerialBT;
 // MPU6050 object
 Adafruit_MPU6050 mpu;
@@ -59,6 +62,9 @@ bool devicePositionAndTemperature();
 
 void setup()
 {
+  //reduce CPU frequency to 80 MHz form default 240 MHz (reduce power consumption from 63 mA to 30 mA)
+  setCpuFrequencyMhz(80);
+
   pinMode(BUZZER, OUTPUT);
   digitalWrite(BUZZER, LOW);
   
@@ -73,9 +79,6 @@ void setup()
   digitalWrite(IR_DIOD_AND_ACCELEROMETER_POWER, HIGH);
   pinMode(VIBRATION_MOTOR, OUTPUT);
   digitalWrite(VIBRATION_MOTOR, LOW);
-  
-  //reduce CPU frequency to 80 MHz form default 240 MHz (reduce power consumption from 63 mA to 30 mA)
-  setCpuFrequencyMhz(80);
   
   ledcSetup(ledChannel[0], freq, resolution);
   ledcAttachPin(RED_LED_PIN, ledChannel[0]);
@@ -98,7 +101,7 @@ void setup()
   changeLedState(0);
   digitalWrite(VIBRATION_MOTOR, LOW);
 
-  Serial.begin(115200);
+  Serial.begin(9600);
   SerialBT.begin("Lucid Dreaming Device");
   SerialBT.println("Urządzenie uruchomione");
   Serial.println("Urządzenie uruchomione");
@@ -135,6 +138,18 @@ void loop()
   if(isLedOn && ledBrightnessWithAccelerometer)
     executLedBrightnes(ledBrightness);
 
+  // leftEyeSensorValue = analogRead(LEFT_EYE_SENSOR);
+  // Serial.print("L: ");
+  // Serial.println(leftEyeSensorValue);
+  // SerialBT.print("L: ");
+  // SerialBT.println(leftEyeSensorValue);
+
+  // rightEyeSensorValue = analogRead(RIGHT_EYE_SENSOR);
+  // Serial.print("R: ");
+  // Serial.println(rightEyeSensorValue);
+  // SerialBT.print("R: ");
+  // SerialBT.println(rightEyeSensorValue);
+  //delay(500);
   // Serial.println((analogRead(BATTERY_LEVEL_PIN) / (4096 / 3.3)) * 2);
   // SerialBT.println((analogRead(BATTERY_LEVEL_PIN) / (4096 / 3.3)) * 2);
   // batteryValue = batteryLevel(BATTERY_LEVEL_PIN);
