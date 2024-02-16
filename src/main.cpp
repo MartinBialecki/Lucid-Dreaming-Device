@@ -26,7 +26,7 @@ int rightEyeSensorValue = 0;
 int lastLeftEyeSensorValue = 0;
 int lastRightEyeSensorValue = 0;
 int maxDeviation = 0;                            // największe chwilowe odchylenie z 2 czujników odbiciowych od poprzednich ich wartości
-int detectionSensitive = 50;                     // od tej wartości zależy przy jakim odchyleniu od ostatnio zapisanego pomiaru będzie zapisywać się następny dodając też ilość ruchów oczu
+int detectionSensitive = 45;                     // od tej wartości zależy przy jakim odchyleniu od ostatnio zapisanego pomiaru będzie zapisywać się następny dodając też ilość ruchów oczu
 int numberOfEyeMovementsToActivatePerMinute = 5; // ilosc wykrytych ruchów gałek ocznych na minutę, które będą miały oznaczać wykrycie fazy snu REM
 int numberOfEyeMovementsLeftSensor = 0;
 int numberOfEyeMovementsRightSensor = 0;
@@ -49,8 +49,8 @@ bool taskExecuted = true;
 
 bool REMdetected = false;                      // flaga wykrycia fazy REM, jeśli wartość to "true", to nadawane są sygnały mające na celu pomóc uświadomić się we śnie
 unsigned long REMdetectionStartTime = 0;       // czas startu wykrywania fazy REM
-float initialDelayTimeInMinutes = 1;           // początkowe opóźnienie wykrywania fazy REM w minutach
-float additionalDelayTimeInMinutes = 10;       // dodatkowe opóźnienie wykrywania fazy REM w minutach
+float initialDelayTimeInMinutes = 0.2;         // początkowe opóźnienie wykrywania fazy REM w minutach
+float additionalDelayTimeInMinutes = 0.1;      // dodatkowe opóźnienie wykrywania fazy REM w minutach
 float delayTimeAfterREMdetectionInMinutes = 5; // opóźnienie wykrywania fazy REM w minutach po jej wykryciu
 int numberOfSignals = 20;                      // ilość nadawanych sygnałów po wykryciu fazy REM
 float signalsCounter = 0;                      // zlicza nadane już sygnały w obecnym cyklu nadawania
@@ -58,7 +58,7 @@ int signalLength = 500;                        // długość pojedynczego sygna�
 int signalTimer = 0;                           // przechowuje czas do następnego sygnału, pozwala uruchamiać sygnał w określonych odstępach czasu bez wstrzymywania działania urządzenia
 
 bool isLedOn = false;
-uint8_t ledBrightness = 10;
+uint8_t ledBrightness = 20;
 bool ledBrightnessWithAccelerometer = true;
 
 int delayTime = 20;
@@ -584,7 +584,7 @@ void numberOfEyeMovementsAddition()
     if (abs(rightEyeSensorValue - lastRightEyeSensorValue) >= detectionSensitive)
     {
       numberOfEyeMovementsRightSensor += 1;
-      lastRightEyeSensorValue = RightEyeSensorValue;
+      lastRightEyeSensorValue = rightEyeSensorValue;
     }
 
     if (numberOfEyeMovementsLeftSensor >= numberOfEyeMovementsToActivatePerMinute || numberOfEyeMovementsRightSensor >= numberOfEyeMovementsToActivatePerMinute)
@@ -611,7 +611,7 @@ void sendingSignals()
     if (signalsCounter >= numberOfSignals)
     {
       changeLedState(0);
-      REMdetection = false;
+      REMdetected = false;
     }
   }
   else
@@ -620,6 +620,7 @@ void sendingSignals()
 
 void shortPressButtonTask()
 {
+  REMdetected = false;
   if (REMdetectionStartTime > millis())
     REMdetectionStartTime += (additionalDelayTimeInMinutes * 60 * 1000);
   else
@@ -649,6 +650,9 @@ void shortPressButtonTask()
 
 void longPressButtonTask()
 {
+  REMdetected = false;
+  changeLedState(0);
+
   REMdetectionStartTime = millis() + (initialDelayTimeInMinutes * 60 * 1000);
 
   leftEyeSensorValue = analogRead(LEFT_EYE_SENSOR);
@@ -659,7 +663,7 @@ void longPressButtonTask()
   else
     maxDeviation = abs(rightEyeSensorValue - lastRightEyeSensorValue);
 
-  if (maxDeviation >= (detectionSensitive / 5))
+  if (maxDeviation >= (detectionSensitive / 3))
   {
     lastLeftEyeSensorValue = leftEyeSensorValue;
     lastRightEyeSensorValue = rightEyeSensorValue;
@@ -671,11 +675,11 @@ void longPressButtonTask()
 
     digitalWrite(BUZZER, HIGH);
     if (maxDeviation < detectionSensitive)
-      delay(200 * (maxDeviation / detectionSensitive));
+      delay(100 * (maxDeviation / detectionSensitive));
     else
-      delay(200);
+      delay(120);
     digitalWrite(BUZZER, LOW);
   }
 
-  delay(20);
+  delay(250);
 }
